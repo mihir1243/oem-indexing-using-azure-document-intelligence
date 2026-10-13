@@ -79,6 +79,7 @@ class IndexResult:
     manual_id_prefix: str
     markdown_path: str | None = None
     extraction_from_cache: bool = False
+    extraction_backend: str | None = None
 
 
 @dataclass

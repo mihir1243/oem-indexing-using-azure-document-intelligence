@@ -1,31 +1,84 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
+from typing import Literal
 
+import pymupdf as fitz
 from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.ai.documentintelligence.models import AnalyzeDocumentRequest, DocumentContentFormat
 from azure.core.credentials import AzureKeyCredential
 
 from src.config import Settings, get_settings
+from src.extraction.pdf_probe import is_text_extractable
+from src.extraction.pymupdf_extractor import extract_with_pymupdf
 from src.models import ExtractedDocument, ManualMetadata, PageSpan
+
+logger = logging.getLogger("oem_manuals.extraction")
+
+ExtractionBackend = Literal["pymupdf", "azure_document_intelligence"]
 
 
 class DocumentExtractor:
     def __init__(self, settings: Settings | None = None) -> None:
         self._settings = settings or get_settings()
-        self._client = DocumentIntelligenceClient(
-            endpoint=self._settings.azure_doc_intelligence_endpoint,
-            credential=AzureKeyCredential(self._settings.azure_doc_intelligence_key),
-        )
+        self._azure_client: DocumentIntelligenceClient | None = None
 
     def extract(
         self,
         pdf_path: Path,
         metadata: ManualMetadata,
-    ) -> ExtractedDocument:
+    ) -> tuple[ExtractedDocument, ExtractionBackend]:
         pdf_path = pdf_path.resolve()
+        mode = self._settings.extraction_backend.strip().lower()
+
+        if mode == "azure":
+            return self._extract_azure(pdf_path, metadata), "azure_document_intelligence"
+
+        doc = fitz.open(pdf_path)
+        try:
+            if mode == "pymupdf" or self._should_use_pymupdf(doc):
+                logger.info("Extracting %s with PyMuPDF", pdf_path.name)
+                return (
+                    extract_with_pymupdf(
+                        doc,
+                        pdf_path.name,
+                        metadata,
+                        self._settings,
+                    ),
+                    "pymupdf",
+                )
+        finally:
+            doc.close()
+
+        logger.info(
+            "PDF appears scanned or low text; extracting %s with Azure Document Intelligence",
+            pdf_path.name,
+        )
+        return self._extract_azure(pdf_path, metadata), "azure_document_intelligence"
+
+    def _should_use_pymupdf(self, doc: fitz.Document) -> bool:
+        return is_text_extractable(
+            doc,
+            min_chars_per_page=self._settings.pymupdf_min_chars_per_page,
+            min_text_page_fraction=self._settings.pymupdf_min_text_page_fraction,
+        )
+
+    def _azure_client_instance(self) -> DocumentIntelligenceClient:
+        if self._azure_client is None:
+            self._azure_client = DocumentIntelligenceClient(
+                endpoint=self._settings.azure_doc_intelligence_endpoint,
+                credential=AzureKeyCredential(self._settings.azure_doc_intelligence_key),
+            )
+        return self._azure_client
+
+    def _extract_azure(
+        self,
+        pdf_path: Path,
+        metadata: ManualMetadata,
+    ) -> ExtractedDocument:
         with pdf_path.open("rb") as document:
-            poller = self._client.begin_analyze_document(
+            poller = self._azure_client_instance().begin_analyze_document(
                 "prebuilt-layout",
                 AnalyzeDocumentRequest(bytes_source=document.read()),
                 output_content_format=DocumentContentFormat.MARKDOWN,

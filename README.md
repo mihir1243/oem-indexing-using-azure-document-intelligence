@@ -1,6 +1,6 @@
 # OEM Manual Indexing and Retrieval
 
-Pipeline for extracting OEM service manuals with Azure Document Intelligence, hierarchical chunking, OpenAI embeddings, and Azure AI Search retrieval.
+Pipeline for extracting OEM service manuals (PyMuPDF for text-native PDFs, Azure Document Intelligence for scanned manuals), hierarchical chunking, OpenAI embeddings, and Azure AI Search retrieval.
 
 ## Setup
 
@@ -19,7 +19,9 @@ uv run python scripts/index_manuals.py --folder ./pdfs --manifest ./manifest.jso
 
 After extraction, markdown is saved under `extracted/markdown/` by default (one `.md` file per PDF, plus a `.page_map.json` sidecar). Configure with `MARKDOWN_OUTPUT_DIR` in `.env`; set it to empty to disable.
 
-If `{stem}.md` already exists, indexing **skips Azure Document Intelligence** and reuses the cached file (`SKIP_EXTRACTION_IF_MARKDOWN_EXISTS=true`). Use `--force-extract` or `FORCE_REEXTRACT=true` to re-run extraction.
+If `{stem}.md` already exists, indexing **reuses the cached extraction** (`SKIP_EXTRACTION_IF_MARKDOWN_EXISTS=true`). Use `--force-extract` or `FORCE_REEXTRACT=true` to re-run extraction.
+
+With `EXTRACTION_BACKEND=auto` (default), the pipeline uses **PyMuPDF + pymupdf4llm** when enough pages have selectable text (markdown with `#` headings, tables as HTML by default via `PYMUPDF_TABLE_OUTPUT=html`), and **Azure Document Intelligence** for scanned or image-only PDFs. Tune detection with `PYMUPDF_MIN_CHARS_PER_PAGE` and `PYMUPDF_MIN_TEXT_PAGE_FRACTION`, or set `EXTRACTION_BACKEND=pymupdf` / `azure` to force one path.
 
 ## Search
 

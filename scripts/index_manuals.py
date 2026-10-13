@@ -34,7 +34,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--force-extract",
         action="store_true",
-        help="Re-run Azure Document Intelligence even if cached markdown exists",
+        help="Re-run PDF extraction even if cached markdown exists",
     )
     return parser.parse_args()
 
@@ -62,8 +62,8 @@ async def _run() -> int:
                 f"[green]Indexed[/green] {result.source_file}: "
                 f"{result.chunks_indexed} chunks"
             )
-            if result.extraction_from_cache:
-                line += " | extraction: cached markdown"
+            if result.extraction_backend:
+                line += f" | extraction: {result.extraction_backend}"
             elif result.markdown_path:
                 line += f" | markdown: {result.markdown_path}"
             console.print(line)
@@ -87,8 +87,8 @@ async def _run() -> int:
         force_reextract=args.force_extract,
     )
     line = f"[green]Indexed[/green] {result.source_file}: {result.chunks_indexed} chunks"
-    if result.extraction_from_cache:
-        line += " | extraction: cached markdown"
+    if result.extraction_backend:
+        line += f" | extraction: {result.extraction_backend}"
     elif result.markdown_path:
         line += f" | markdown: {result.markdown_path}"
     console.print(line)

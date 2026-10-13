@@ -53,7 +53,7 @@ async def index_manual(
         settings.force_reextract if force_reextract is None else force_reextract
     )
 
-    extracted, markdown_path, from_cache = await _run_step(
+    extracted, markdown_path, from_cache, extraction_backend = await _run_step(
         "load_or_extract",
         load_or_extract,
         pdf_path,
@@ -61,10 +61,7 @@ async def index_manual(
         settings,
         force_reextract=reextract,
     )
-    logger.info(
-        "Extraction source: %s",
-        "cached markdown" if from_cache else "azure_document_intelligence",
-    )
+    logger.info("Extraction source: %s", extraction_backend)
 
     chunks = await _run_step("chunking", chunker.chunk, extracted)
     logger.info("Chunk count: %d", len(chunks))
@@ -107,6 +104,7 @@ async def index_manual(
         manual_id_prefix=prefix,
         markdown_path=str(markdown_path) if markdown_path else None,
         extraction_from_cache=from_cache,
+        extraction_backend=extraction_backend,
     )
 
 

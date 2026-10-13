@@ -57,6 +57,40 @@ class Settings(BaseSettings):
     skip_extraction_if_markdown_exists: bool = True
     force_reextract: bool = False
 
+    # auto: PyMuPDF when the PDF has enough selectable text; else Azure Document Intelligence
+    extraction_backend: str = "auto"
+    pymupdf_min_chars_per_page: int = 40
+    pymupdf_min_text_page_fraction: float = 0.25
+    # Strip repeating page header/footer bands (can remove body text on some PDFs)
+    pymupdf_strip_page_header_footer: bool = False
+    # Table format in pymupdf4llm output: markdown (GFM pipes) or html (like Azure DI)
+    pymupdf_table_output: str = "html"
+
+    @field_validator("extraction_backend", mode="before")
+    @classmethod
+    def normalize_extraction_backend(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.strip().lower()
+        return value
+
+    @model_validator(mode="after")
+    def validate_extraction_backend(self) -> Settings:
+        allowed = {"auto", "pymupdf", "azure"}
+        if self.extraction_backend not in allowed:
+            raise ValueError(
+                f"EXTRACTION_BACKEND must be one of {sorted(allowed)}, "
+                f"got {self.extraction_backend!r}."
+            )
+        if not 0 < self.pymupdf_min_text_page_fraction <= 1:
+            raise ValueError("PYMUPDF_MIN_TEXT_PAGE_FRACTION must be between 0 and 1.")
+        if self.pymupdf_min_chars_per_page < 1:
+            raise ValueError("PYMUPDF_MIN_CHARS_PER_PAGE must be at least 1.")
+        if self.pymupdf_table_output not in {"markdown", "html"}:
+            raise ValueError(
+                "PYMUPDF_TABLE_OUTPUT must be 'markdown' or 'html'."
+            )
+        return self
+
     @field_validator(
         "azure_doc_intelligence_endpoint",
         "azure_doc_intelligence_key",
