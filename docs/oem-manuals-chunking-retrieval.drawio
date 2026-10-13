@@ -1,0 +1,356 @@
+<mxfile host="app.diagrams.net" agent="Cursor" version="24.8.0">
+  <diagram id="oem-manuals" name="Chunking and Retrieval">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1650" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="OEM Manual Indexing — Implemented Approach" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=20;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="400" y="20" width="800" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Section 1: Chunking & Indexing -->
+        <mxCell id="lane1" value="1. Chunking &amp; Indexing Pipeline" style="swimlane;horizontal=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1;startSize=36;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="1720" height="580" as="geometry" />
+        </mxCell>
+
+        <mxCell id="in_manifest" value="manifest.json&#xa;(file, manufacturer,&#xa;model_series, manual_type)" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacingLeft=8;" vertex="1" parent="lane1">
+          <mxGeometry x="30" y="60" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="in_pdf" value="PDF manuals&#xa;(folder)" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=40;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="lane1">
+          <mxGeometry x="30" y="170" width="120" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="step_extract" value="load_or_extract&#xa;&#xa;• Cached .md + page_map?&#xa;  → skip Azure DI&#xa;• Else Document Intelligence&#xa;  → markdown + page map&#xa;• Save under extracted/markdown/" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;spacingLeft=10;" vertex="1" parent="lane1">
+          <mxGeometry x="250" y="100" width="220" height="140" as="geometry" />
+        </mxCell>
+
+        <mxCell id="svc_di" value="Azure Document&#xa;Intelligence" style="shape=cloud;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="lane1">
+          <mxGeometry x="250" y="270" width="140" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="store_md" value="Markdown cache&#xa;{stem}.md&#xa;{stem}.page_map.json" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="lane1">
+          <mxGeometry x="420" y="260" width="150" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="chunk_lane" value="HierarchicalChunker (src/chunking/hierarchical.py)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;fontStyle=1;startSize=32;horizontal=0;" vertex="1" parent="lane1">
+          <mxGeometry x="480" y="48" width="720" height="500" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hc_in" value="Input: ExtractedDocument&#xa;• markdown_content&#xa;• page_map (char offset → page)&#xa;• metadata (manifest fields)&#xa;• manual_id_prefix = SHA256(filename)[:16]" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=left;spacingLeft=8;fontSize=11;" vertex="1" parent="chunk_lane">
+          <mxGeometry x="20" y="50" width="200" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hc_headers" value="① MarkdownHeaderTextSplitter&#xa;Headers: # h1, ## h2, ### h3, #### h4&#xa;strip_headers = false (headers stay in body)&#xa;→ one LangChain Document per header section" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;spacingLeft=8;fontSize=11;" vertex="1" parent="chunk_lane">
+          <mxGeometry x="250" y="45" width="220" height="95" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hc_context" value="② _section_context_from_metadata&#xa;chapter_title ← h1&#xa;section_title ← deepest of h4…h1&#xa;section_path ← &quot;h1 &gt; h2 &gt; h3 &gt; h4&quot; (non-empty parts)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;spacingLeft=8;fontSize=11;" vertex="1" parent="chunk_lane">
+          <mxGeometry x="500" y="45" width="200" height="95" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hc_loop" value="For each header section (in order)" style="shape=process;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;fontStyle=2" vertex="1" parent="chunk_lane">
+          <mxGeometry x="250" y="155" width="220" height="35" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hc_segment" value="③ _split_table_and_text(section.page_content)&#xa;Scan lines: |…| rows = table run&#xa;Non-table lines = prose run&#xa;→ ordered (text, table) segments" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;spacingLeft=8;fontSize=11;" vertex="1" parent="chunk_lane">
+          <mxGeometry x="20" y="200" width="250" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hc_branch" value="Segment&#xa;type?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="chunk_lane">
+          <mxGeometry x="310" y="205" width="100" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hc_table" value="Table path: _split_table&#xa;• Parse header row + |---| separator&#xa;• If whole table ≤ CHUNK_MAX tokens → one chunk&#xa;• Else split data rows; repeat header on each part&#xa;• Target body tokens = max(200, MAX − header − 16)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;spacingLeft=8;fontSize=11;" vertex="1" parent="chunk_lane">
+          <mxGeometry x="450" y="165" width="250" height="115" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hc_text" value="Text path&#xa;• tiktoken cl100k_base token count&#xa;• If tokens ≤ CHUNK_MAX (default 1000) → keep as one piece&#xa;• Else RecursiveCharacterTextSplitter&#xa;  chunk_size = CHUNK_MAX, overlap = CHUNK_OVERLAP (128)&#xa;  separators: ¶¶, bullets, numbered lists, “. ”, newline" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;spacingLeft=8;fontSize=11;" vertex="1" parent="chunk_lane">
+          <mxGeometry x="450" y="295" width="250" height="130" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hc_pieces" value="For each text piece (skip empty)" style="shape=process;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;fontStyle=2" vertex="1" parent="chunk_lane">
+          <mxGeometry x="20" y="320" width="200" height="35" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hc_offset" value="④ Locate in full markdown&#xa;_find_offset(markdown, raw_text, search_from)&#xa;→ char_offset (sequential scan)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;spacingLeft=8;fontSize=11;" vertex="1" parent="chunk_lane">
+          <mxGeometry x="20" y="375" width="230" height="75" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hc_emit" value="⑤ Emit Chunk&#xa;raw_text = piece (no path prefix)&#xa;chunk_content = section_path + &quot;\n&quot; + raw_text (if path set)&#xa;page_number = page_for_offset(page_map, char_offset)&#xa;id = {prefix}_{chunk_index:06d}_{sha8}&#xa;metadata = manifest ManualMetadata&#xa;→ list[Chunk]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;spacingLeft=8;fontSize=11;fontStyle=1" vertex="1" parent="chunk_lane">
+          <mxGeometry x="280" y="360" width="280" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hc_note" value="Embedding input uses chunk_content (section path prepended for vector search context)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontStyle=2" vertex="1" parent="chunk_lane">
+          <mxGeometry x="580" y="440" width="130" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hc_e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="chunk_lane" source="hc_in" target="hc_headers">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hc_e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="chunk_lane" source="hc_headers" target="hc_context">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hc_e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="chunk_lane" source="hc_context" target="hc_loop">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hc_e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="chunk_lane" source="hc_loop" target="hc_segment">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hc_e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="chunk_lane" source="hc_segment" target="hc_branch">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hc_e6" value="table" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="chunk_lane" source="hc_branch" target="hc_table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hc_e7" value="prose" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="chunk_lane" source="hc_branch" target="hc_text">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hc_e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="chunk_lane" source="hc_table" target="hc_pieces">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="575" y="150" />
+              <mxPoint x="120" y="150" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hc_e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="chunk_lane" source="hc_text" target="hc_pieces">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="575" y="430" />
+              <mxPoint x="120" y="430" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hc_e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="chunk_lane" source="hc_pieces" target="hc_offset">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hc_e11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="chunk_lane" source="hc_offset" target="hc_emit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="step_embed" value="Embedder (OpenAI)&#xa;&#xa;text-embedding-3-small&#xa;Batch embed chunk_content&#xa;→ content_vector" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;spacingLeft=10;" vertex="1" parent="lane1">
+          <mxGeometry x="1240" y="100" width="200" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="step_docs" value="chunks_to_index_documents&#xa;&#xa;Metadata: manufacturer,&#xa;model_series, manual_type&#xa;derive_section_tags&#xa;(troubleshooting, …)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacingLeft=10;" vertex="1" parent="lane1">
+          <mxGeometry x="1240" y="230" width="200" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="step_delete" value="Delete stale chunks&#xa;(manual_id_prefix or&#xa;manufacturer + manual_type)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;align=left;spacingLeft=10;" vertex="1" parent="lane1">
+          <mxGeometry x="1480" y="100" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="step_upload" value="SearchIndexer.upload&#xa;Index: oem-manuals-index" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=left;spacingLeft=10;fontStyle=1" vertex="1" parent="lane1">
+          <mxGeometry x="1480" y="210" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="idx_store" value="Azure AI Search&#xa;Index documents&#xa;(hybrid-ready fields)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=14;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1" vertex="1" parent="lane1">
+          <mxGeometry x="1240" y="380" width="160" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="script_index" value="scripts/index_manuals.py&#xa;pipeline.index_folder" style="shape=process;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="lane1">
+          <mxGeometry x="1480" y="380" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="lane1" source="in_pdf" target="step_extract">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="lane1" source="in_manifest" target="step_extract">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="lane1" source="step_extract" target="svc_di">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="cache hit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="lane1" source="step_extract" target="store_md">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="lane1" source="step_extract" target="hc_in">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="lane1" source="hc_emit" target="step_embed">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="lane1" source="step_embed" target="step_docs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="lane1" source="step_docs" target="step_delete">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="lane1" source="step_delete" target="step_upload">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="lane1" source="step_upload" target="idx_store">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Section 2: Retrieval -->
+        <mxCell id="lane2" value="2. Retrieval Pipeline" style="swimlane;horizontal=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1;startSize=36;" vertex="1" parent="1">
+          <mxGeometry x="40" y="700" width="1720" height="620" as="geometry" />
+        </mxCell>
+
+        <mxCell id="in_query" value="User / CLI query&#xa;scripts/search_manuals.py" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="lane2">
+          <mxGeometry x="40" y="80" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="in_filters" value="Optional filters&#xa;manufacturer, manual_type,&#xa;model / model_series" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacingLeft=8;" vertex="1" parent="lane2">
+          <mxGeometry x="40" y="170" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="retriever" value="ManualRetriever.search" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="lane2">
+          <mxGeometry x="300" y="100" width="180" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="q_embed" value="embed_query (OpenAI)&#xa;Same model / dimensions&#xa;as indexing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;spacingLeft=10;" vertex="1" parent="lane2">
+          <mxGeometry x="530" y="70" width="200" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="build_filt" value="build_filter&#xa;OData expressions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacingLeft=10;" vertex="1" parent="lane2">
+          <mxGeometry x="530" y="190" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="search_lane" value="Azure AI Search — hybrid retrieval + semantic ranker (service-side)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;fontStyle=1;startSize=32;horizontal=0;" vertex="1" parent="lane2">
+          <mxGeometry x="760" y="48" width="720" height="540" as="geometry" />
+        </mxCell>
+
+        <mxCell id="as_req" value="SearchClient.search() request&#xa;(ManualRetriever)&#xa;&#xa;• search_text = user query (BM25 input)&#xa;• vector_queries[0]:&#xa;  fields = content_vector&#xa;  vector = OpenAI query embedding&#xa;  k = max(top_k, 50)&#xa;• filter = OData (if any)&#xa;• top = top_k&#xa;• select = id, chunk_content, raw_text,&#xa;  section_*, page_number, metadata" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;align=left;spacingLeft=8;fontSize=11;" vertex="1" parent="search_lane">
+          <mxGeometry x="20" y="50" width="240" height="175" as="geometry" />
+        </mxCell>
+
+        <mxCell id="as_filter" value="① Apply OData filter&#xa;Narrows index to matching docs only&#xa;(manufacturer, manual_type,&#xa; model_series/any)&#xa;→ smaller candidate pool" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacingLeft=8;fontSize=11;" vertex="1" parent="search_lane">
+          <mxGeometry x="290" y="55" width="200" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="as_hybrid_label" value="② Hybrid retrieval (parallel)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=11;fontStyle=1" vertex="1" parent="search_lane">
+          <mxGeometry x="290" y="165" width="200" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="as_lexical" value="Lexical branch&#xa;Full-text / BM25 on searchable fields&#xa;(e.g. chunk_content, titles, paths)&#xa;&#xa;Optional scoring profile&#xa;(USE_SCORING_PROFILE):&#xa;• field weights (section_title 3, path 2…)&#xa;• tag boost on section_tags&#xa;  scoring_parameters: boostTags-{tag}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;spacingLeft=8;fontSize=11;" vertex="1" parent="search_lane">
+          <mxGeometry x="20" y="195" width="250" height="145" as="geometry" />
+        </mxCell>
+
+        <mxCell id="as_vector" value="Vector branch&#xa;HNSW k-nearest neighbors&#xa;on content_vector (1536-d)&#xa;Cosine similarity vs query vector&#xa;Returns top-k vector neighbors&#xa;(k ≥ max(top_k, 50) in this app)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;spacingLeft=8;fontSize=11;" vertex="1" parent="search_lane">
+          <mxGeometry x="290" y="195" width="230" height="125" as="geometry" />
+        </mxCell>
+
+        <mxCell id="as_rrf" value="③ Reciprocal Rank Fusion (RRF)&#xa;Merge lexical + vector ranked lists&#xa;into one hybrid candidate set&#xa;(no single manual score yet —&#xa; service combines rank positions)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;align=left;spacingLeft=8;fontSize=11;fontStyle=1" vertex="1" parent="search_lane">
+          <mxGeometry x="540" y="195" width="160" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="as_sem_gate" value="USE_SEMANTIC_&#xa;SEARCH?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="search_lane">
+          <mxGeometry x="540" y="330" width="110" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="as_semantic" value="④ Semantic ranker (L2)&#xa;query_type = semantic&#xa;semantic_configuration_name =&#xa;  oem-semantic-config&#xa;&#xa;Prioritized fields (index config):&#xa;• title → section_title&#xa;• content → chunk_content&#xa;• keywords → section_path,&#xa;  manufacturer, manual_type&#xa;&#xa;Re-ranks hybrid candidates with&#xa;a language model → @search.reranker_score" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;spacingLeft=8;fontSize=11;fontStyle=1" vertex="1" parent="search_lane">
+          <mxGeometry x="290" y="340" width="230" height="175" as="geometry" />
+        </mxCell>
+
+        <mxCell id="as_nosem" value="No semantic stage&#xa;Final ordering from hybrid&#xa;@search.score" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;align=left;spacingLeft=8;fontSize=11;" vertex="1" parent="search_lane">
+          <mxGeometry x="20" y="370" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="as_out" value="⑤ Return top_k documents&#xa;ManualRetriever maps score:&#xa;reranker_score if present, else @search.score&#xa;→ SearchResult[]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;spacingLeft=8;fontSize=11;fontStyle=1" vertex="1" parent="search_lane">
+          <mxGeometry x="540" y="430" width="160" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="as_setup" value="Index setup (one-time):&#xa;enable_semantic_config.py&#xa;Requires Search SKU with semantic ranking" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacingLeft=8;fontSize=10;" vertex="1" parent="search_lane">
+          <mxGeometry x="20" y="460" width="200" height="65" as="geometry" />
+        </mxCell>
+
+        <mxCell id="as_e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="search_lane" source="as_req" target="as_filter">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="as_e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="search_lane" source="as_filter" target="as_lexical">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="as_e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="search_lane" source="as_filter" target="as_vector">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="as_e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="search_lane" source="as_lexical" target="as_rrf">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="as_e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="search_lane" source="as_vector" target="as_rrf">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="as_e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="search_lane" source="as_rrf" target="as_sem_gate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="as_e7" value="true" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="search_lane" source="as_sem_gate" target="as_semantic">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="as_e8" value="false" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="search_lane" source="as_sem_gate" target="as_nosem">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="as_e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="search_lane" source="as_semantic" target="as_out">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="as_e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="search_lane" source="as_nosem" target="as_out">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="120" y="475" />
+              <mxPoint x="620" y="475" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="idx_store2" value="oem-manuals-index&#xa;&#xa;Stored per chunk:&#xa;chunk_content, content_vector,&#xa;section_tags, metadata fields" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=14;fillColor=#f8cecc;strokeColor=#b85450;align=left;spacingLeft=6;fontSize=10;" vertex="1" parent="lane2">
+          <mxGeometry x="1520" y="200" width="160" height="130" as="geometry" />
+        </mxCell>
+
+        <mxCell id="results" value="SearchResult[]&#xa;&#xa;chunk_content, raw_text,&#xa;section_path, titles, page,&#xa;manufacturer, model_series,&#xa;manual_type, score&#xa;(@search.reranker_score or @search.score)" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;spacingLeft=10;" vertex="1" parent="lane2">
+          <mxGeometry x="1520" y="380" width="170" height="180" as="geometry" />
+        </mxCell>
+
+        <mxCell id="downstream" value="Downstream RAG /&#xa;diagnosis UI (consumer)" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;" vertex="1" parent="lane2">
+          <mxGeometry x="1520" y="580" width="170" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="as_idx_lex" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;" edge="1" parent="lane2" source="idx_store2" target="as_lexical">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="as_idx_vec" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;" edge="1" parent="lane2" source="idx_store2" target="as_vector">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="r1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="lane2" source="in_query" target="retriever">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="lane2" source="in_filters" target="build_filt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="lane2" source="retriever" target="q_embed">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="lane2" source="retriever" target="build_filt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r5" value="query vector" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="lane2" source="q_embed" target="as_req">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r6" value="filter" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="lane2" source="build_filt" target="as_req">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r5b" value="search_text" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="lane2" source="retriever" target="as_req">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="lane2" source="as_out" target="results">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;" edge="1" parent="lane2" source="results" target="downstream">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Link index between sections -->
+        <mxCell id="link_idx" value="same index" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;strokeColor=#b85450;strokeWidth=2;" edge="1" parent="1" source="idx_store" target="idx_store2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1720" y="500" />
+              <mxPoint x="1720" y="950" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

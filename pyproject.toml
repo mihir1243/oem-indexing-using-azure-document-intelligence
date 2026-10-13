@@ -1,0 +1,37 @@
+[project]
+name = "oem-manual-indexing-using-azure-intelligence"
+version = "0.1.0"
+description = "OEM manual extraction, chunking, embedding, and Azure AI Search retrieval pipeline"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "azure-ai-documentintelligence>=1.0.0",
+    "azure-search-documents>=11.6.0",
+    "openai>=1.30.0",
+    "pydantic-settings>=2.0.0",
+    "langchain-text-splitters>=0.2.0",
+    "tiktoken>=0.7.0",
+    "python-dotenv>=1.0.0",
+    "tenacity>=8.0.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "integration: tests that require live Azure/OpenAI credentials",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
