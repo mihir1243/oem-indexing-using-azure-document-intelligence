@@ -1,0 +1,228 @@
+<mxfile host="app.diagrams.net" agent="Cursor">
+  <diagram id="oem-extraction" name="PDF Extraction">
+    <mxGraphModel dx="1839" dy="813" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="2200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=20;fontStyle=1" value="OEM Manual Indexing — PDF Extraction (load_or_extract → DocumentExtractor)" vertex="1">
+          <mxGeometry height="40" width="1100" x="350" y="16" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_entry" parent="1" style="swimlane;horizontal=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1;startSize=36;" value="1. Entry &amp; markdown cache (load_or_extract.py)" vertex="1">
+          <mxGeometry height="320" width="1640" x="40" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="Xgy7ToDq2VMPW9BD3utW-2" edge="1" parent="lane_entry" source="in_pdf" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cache_q">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="110.13888888888891" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="in_pdf" parent="lane_entry" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=left;spacingLeft=8;" value="PDF path&#xa;+ ManualMetadata&#xa;+ Settings" vertex="1">
+          <mxGeometry height="80" width="160" x="40" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="cache_q" parent="lane_entry" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;Markdown exists?&lt;/font&gt;" vertex="1">
+          <mxGeometry height="100" width="150" x="305" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="cached" parent="lane_entry" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;spacingLeft=8;fontSize=11;" value="load_cached_extraction()&#xa;Read {stem}.md +&#xa;{stem}.page_map.json&#xa;&#xa;backend = &quot;cached&quot;" vertex="1">
+          <mxGeometry height="110" width="200" x="630" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="extract_call" parent="lane_entry" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;fontStyle=1" value="DocumentExtractor.extract()&#xa;(extractor.py)" vertex="1">
+          <mxGeometry height="50" width="200" x="280" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="Xgy7ToDq2VMPW9BD3utW-3" edge="1" parent="lane_entry" source="save_md" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="out_doc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="save_md" parent="lane_entry" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="save_extracted_markdown()&#xa;if MARKDOWN_OUTPUT_DIR set&#xa;→ {stem}.md + page_map.json" vertex="1">
+          <mxGeometry height="90" width="180" x="630" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="out_doc" parent="lane_entry" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;spacingLeft=8;fontStyle=1;fontSize=11;" value="ExtractedDocument&#xa;• markdown_content&#xa;• page_map: list[PageSpan]&#xa;• metadata&#xa;• source_file" vertex="1">
+          <mxGeometry height="100" width="220" x="940" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="note_downstream" parent="lane_entry" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontStyle=2" value="Downstream: HierarchicalChunker uses markdown + page_for_offset(page_map, char_offset)" vertex="1">
+          <mxGeometry height="40" width="400" x="1180" y="225" as="geometry" />
+        </mxCell>
+        <mxCell id="e_cache_no" edge="1" parent="lane_entry" source="cache_q" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="extract_call" value="no">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_cache_yes" edge="1" parent="lane_entry" source="cache_q" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cached" value="yes">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="470.00000000000045" y="115.00000000000011" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Xgy7ToDq2VMPW9BD3utW-5" edge="1" parent="lane_entry" source="extract_call" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=-0.015;entryY=0.398;entryDx=0;entryDy=0;entryPerimeter=0;" target="save_md">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_backend" parent="1" style="swimlane;horizontal=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;fontStyle=1;startSize=36;" value="2. Backend selection (DocumentExtractor)" vertex="1">
+          <mxGeometry height="280" width="1640" x="40" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="mode_q" parent="lane_backend" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="EXTRACTION_BACKEND&#xa;(auto | pymupdf | azure)" vertex="1">
+          <mxGeometry height="90" width="160" x="80" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="azure_direct" parent="lane_backend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="azure →&#xa;_extract_azure()" vertex="1">
+          <mxGeometry height="50" width="140" x="300" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="open_pdf" parent="lane_backend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" value="fitz.open(pdf)&#xa;auto or pymupdf" vertex="1">
+          <mxGeometry height="50" width="140" x="300" y="155" as="geometry" />
+        </mxCell>
+        <mxCell id="probe_q" parent="lane_backend" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;align=center;spacingLeft=4;" value="pymupdf mode OR&lt;br&gt;is_text_extractable()?&lt;br&gt;(min chars/page +&lt;br&gt;min text-page fraction)" vertex="1">
+          <mxGeometry height="110" width="170" x="485" y="125" as="geometry" />
+        </mxCell>
+        <mxCell id="to_pymupdf" parent="lane_backend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;fontStyle=1" value="extract_with_pymupdf()&#xa;backend = pymupdf" vertex="1">
+          <mxGeometry height="60" width="180" x="700" y="95" as="geometry" />
+        </mxCell>
+        <mxCell id="to_azure" parent="lane_backend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;align=left;spacingLeft=6;" value="Scanned / low text&#xa;_extract_azure()&#xa;backend = azure_document_intelligence" vertex="1">
+          <mxGeometry height="70" width="200" x="700" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="azure_box" parent="lane_backend" style="shape=cloud;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=center;spacingLeft=8;fontSize=11;" value="Azure Document Intelligence&lt;br&gt;prebuilt-layout&lt;br&gt;output_content_format = MARKDOWN&lt;br&gt;→ result.content + page spans" vertex="1">
+          <mxGeometry height="100" width="420" x="980" y="25" as="geometry" />
+        </mxCell>
+        <mxCell id="settings_note" parent="lane_backend" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontStyle=2" value="Settings: PYMUPDF_MIN_CHARS_PER_PAGE, PYMUPDF_MIN_TEXT_PAGE_FRACTION, AZURE_DOC_INTELLIGENCE_*" vertex="1">
+          <mxGeometry height="40" width="400" x="980" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="e_mode_azure" edge="1" parent="lane_backend" source="mode_q" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="azure_direct" value="azure">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_mode_open" edge="1" parent="lane_backend" source="mode_q" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="open_pdf" value="auto / pymupdf">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_open_probe" edge="1" parent="lane_backend" source="open_pdf" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="probe_q">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_probe_yes" edge="1" parent="lane_backend" source="probe_q" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="to_pymupdf" value="yes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_probe_no" edge="1" parent="lane_backend" source="probe_q" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="to_azure" value="no">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_az_direct" edge="1" parent="lane_backend" source="azure_direct" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;entryX=0.076;entryY=0.492;entryDx=0;entryDy=0;entryPerimeter=0;" target="azure_box">
+          <mxGeometry relative="1" x="-0.0571" as="geometry" />
+        </mxCell>
+        <mxCell id="e_az_fallback" edge="1" parent="lane_backend" source="to_azure" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="azure_box">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_pymupdf" parent="1" style="swimlane;horizontal=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;fontStyle=1;startSize=36;" value="3. PyMuPDF path (pymupdf_extractor.py)" vertex="1">
+          <mxGeometry height="520" width="1640" x="40" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="norm_q" parent="lane_pymupdf" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" value="PYMUPDF_NORMALIZE_HEADINGS&#xa;AND pymupdf4llm&#xa;_use_layout?" vertex="1">
+          <mxGeometry height="90" width="150" x="40" y="35" as="geometry" />
+        </mxCell>
+        <mxCell id="plain_md" parent="lane_pymupdf" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;align=left;spacingLeft=8;fontSize=11;" value="_plain_markdown()&#xa;pymupdf4llm.to_markdown()&#xa;page_chunks=True&#xa;optional table_output=html&#xa;header/footer per strip setting" vertex="1">
+          <mxGeometry height="110" width="220" x="50" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="layout_path" parent="lane_pymupdf" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=12;fontStyle=1" value="_layout_markdown_with_headings()" vertex="1">
+          <mxGeometry height="40" width="240" x="240" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="parse_doc" parent="lane_pymupdf" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;align=left;spacingLeft=8;fontSize=10;" value="document_layout.parse_document()&#xa;layout boxes per page&#xa;force_text, use_ocr&#xa;render_html_tables if PYMUPDF_TABLE_OUTPUT=html" vertex="1">
+          <mxGeometry height="90" width="240" x="240" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="bm_use" parent="lane_pymupdf" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=10;align=left;spacingLeft=6;" value="_usable_bookmarks()&#xa;outline count ≥&#xa;BOOKMARKS_MIN_ENTRIES" vertex="1">
+          <mxGeometry height="70" width="160" x="540" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="norm_call" parent="lane_pymupdf" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;align=left;spacingLeft=8;" value="normalize_headings(parsed, bookmarks)&#xa;→ heading_inserts{page → # lines}" vertex="1">
+          <mxGeometry height="60" width="240" x="760" y="145" as="geometry" />
+        </mxCell>
+        <mxCell id="to_md_chunks" parent="lane_pymupdf" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;align=left;spacingLeft=8;fontSize=10;" value="parsed.to_markdown(page_chunks=True)&#xa;header/footer from PYMUPDF_STRIP_*" vertex="1">
+          <mxGeometry height="60" width="220" x="1070" y="145" as="geometry" />
+        </mxCell>
+        <mxCell id="assemble" parent="lane_pymupdf" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;spacingLeft=8;fontSize=11;" value="For each page chunk:&#xa;• prepend heading_inserts[page_number]&#xa;• join pages with \\n\\n&#xa;• build PageSpan(start, end, page_number)" vertex="1">
+          <mxGeometry height="90" width="260" x="1360" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="warn_layout" parent="lane_pymupdf" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=left;spacingLeft=6;" value="If normalize on but no layout:&#xa;warn → plain to_markdown" vertex="1">
+          <mxGeometry height="70" width="180" x="50" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_norm" parent="lane_pymupdf" style="swimlane;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;fontStyle=1;startSize=28;horizontal=0;" value="heading_normalizer.py (in-place on ParsedDocument boxes)" vertex="1">
+          <mxGeometry height="250" width="1320" x="290" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="hn1" parent="lane_norm" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;align=left;spacingLeft=6;" value="① _mark_margin_boxes&#xa;page-header/footer; repeated top/bottom band text" vertex="1">
+          <mxGeometry height="65" width="200" x="40" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="hn2" parent="lane_norm" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;align=left;spacingLeft=6;" value="② _classify_headings&#xa;promote short bold/large text;&#xa;demote admonitions, captions, sentences" vertex="1">
+          <mxGeometry height="75" width="210" x="280" y="35" as="geometry" />
+        </mxCell>
+        <mxCell id="hn3q" parent="lane_norm" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" value="Bookmarks&#xa;usable?" vertex="1">
+          <mxGeometry height="60" width="100" x="335" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="hn3a" parent="lane_norm" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;align=left;spacingLeft=6;" value="③a _anchor_bookmarks&#xa;match outline titles on page;&#xa;insert # if no match" vertex="1">
+          <mxGeometry height="70" width="180" x="610" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="hn3b" parent="lane_norm" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;align=left;spacingLeft=6;" value="③b _anchor_running_headers&#xa;detect chapter/section bands;&#xa;nest by span; anchor title page" vertex="1">
+          <mxGeometry height="70" width="200" x="610" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="hn4" parent="lane_norm" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;align=left;spacingLeft=6;" value="④ _assign_levels&#xa;numbered 2.5.1 depth;&#xa;font-size stack under anchors;&#xa;set boxclass=section-header, header_level 1–6" vertex="1">
+          <mxGeometry height="85" width="220" x="850" y="62.5" as="geometry" />
+        </mxCell>
+        <mxCell id="hn5" parent="lane_norm" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;align=left;spacingLeft=6;" value="⑤ Demote heading repeated&#xa;on consecutive page (e.g. TOC)" vertex="1">
+          <mxGeometry height="60" width="200" x="1110" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="he1" edge="1" parent="lane_norm" source="hn1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="hn2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="he2" edge="1" parent="lane_norm" source="hn2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="hn3q">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="he3a" edge="1" parent="lane_norm" source="hn3q" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="hn3a" value="yes">
+          <mxGeometry relative="1" x="-0.0189" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="he3b" edge="1" parent="lane_norm" source="hn3q" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="hn3b" value="no">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="he4a" edge="1" parent="lane_norm" source="hn3a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="hn4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="he4b" edge="1" parent="lane_norm" source="hn3b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="hn4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="he5" edge="1" parent="lane_norm" source="hn4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="hn5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pe1" edge="1" parent="lane_pymupdf" source="norm_q" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="plain_md" value="no">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pe2" edge="1" parent="lane_pymupdf" source="norm_q" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="layout_path" value="yes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pe3" edge="1" parent="lane_pymupdf" source="layout_path" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="parse_doc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pe4" edge="1" parent="lane_pymupdf" source="parse_doc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="bm_use">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="174.99999999999977" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="pe6" edge="1" parent="lane_pymupdf" source="bm_use" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="norm_call">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pe7" edge="1" parent="lane_pymupdf" source="norm_call" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="to_md_chunks">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pe8" edge="1" parent="lane_pymupdf" source="to_md_chunks" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" target="assemble">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pe_plain_asm" edge="1" parent="lane_pymupdf" source="plain_md" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;exitX=0.75;exitY=0;exitDx=0;exitDy=0;" target="assemble">
+          <mxGeometry relative="1" x="-0.0518" as="geometry">
+            <Array as="points">
+              <mxPoint x="215" y="240" />
+              <mxPoint x="1510" y="240" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cross_pymupdf" edge="1" parent="1" source="to_pymupdf" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;strokeColor=#9673a6;dashed=1;" target="norm_q">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="790" y="700" />
+              <mxPoint x="155" y="700" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cross_extract" edge="1" parent="1" source="extract_call" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;strokeColor=#6c8ebf;dashed=1;" target="mode_q">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="500" y="400" />
+              <mxPoint x="200" y="400" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

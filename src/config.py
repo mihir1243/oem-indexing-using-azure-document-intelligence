@@ -65,6 +65,12 @@ class Settings(BaseSettings):
     pymupdf_strip_page_header_footer: bool = False
     # Table format in pymupdf4llm output: markdown (GFM pipes) or html (like Azure DI)
     pymupdf_table_output: str = "html"
+    # Rebuild the heading hierarchy from layout signals (running headers, numbering, font size)
+    pymupdf_normalize_headings: bool = True
+    # Use the PDF outline (bookmarks) as the top levels of the heading hierarchy
+    pymupdf_use_bookmarks: bool = False
+    # Outlines with fewer usable entries are ignored (e.g. a single placeholder bookmark)
+    pymupdf_bookmarks_min_entries: int = 3
 
     @field_validator("extraction_backend", mode="before")
     @classmethod
@@ -89,6 +95,8 @@ class Settings(BaseSettings):
             raise ValueError(
                 "PYMUPDF_TABLE_OUTPUT must be 'markdown' or 'html'."
             )
+        if self.pymupdf_bookmarks_min_entries < 1:
+            raise ValueError("PYMUPDF_BOOKMARKS_MIN_ENTRIES must be at least 1.")
         return self
 
     @field_validator(
