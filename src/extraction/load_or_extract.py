@@ -4,6 +4,7 @@ from pathlib import Path
 
 from src.config import Settings
 from src.extraction.extractor import DocumentExtractor
+from src.extraction.heading_normalize import normalize_marker_headings_with_page_map
 from src.extraction.markdown_store import (
     load_cached_extraction,
     markdown_path_for,
@@ -32,7 +33,11 @@ def load_or_extract(
         output_dir = Path(output_dir_str)
         cached = load_cached_extraction(pdf_path.name, output_dir, metadata)
         if cached is not None:
-            return cached, markdown_path_for(pdf_path.name, output_dir), True
+            return (
+                _maybe_normalize_headings(cached, settings),
+                markdown_path_for(pdf_path.name, output_dir),
+                True,
+            )
 
     extractor = DocumentExtractor(settings)
     extracted = extractor.extract(pdf_path, metadata)
@@ -41,3 +46,21 @@ def load_or_extract(
         markdown_path = save_extracted_markdown(extracted, Path(output_dir_str))
 
     return extracted, markdown_path, False
+
+
+def _maybe_normalize_headings(
+    extracted: ExtractedDocument,
+    settings: Settings,
+) -> ExtractedDocument:
+    if not settings.marker_normalize_headings:
+        return extracted
+    md, page_map = normalize_marker_headings_with_page_map(
+        extracted.markdown_content,
+        extracted.page_map,
+    )
+    return ExtractedDocument(
+        source_file=extracted.source_file,
+        markdown_content=md,
+        page_map=page_map,
+        metadata=extracted.metadata,
+    )

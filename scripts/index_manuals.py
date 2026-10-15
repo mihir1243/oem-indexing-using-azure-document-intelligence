@@ -34,7 +34,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--force-extract",
         action="store_true",
-        help="Re-run Azure Document Intelligence even if cached markdown exists",
+        help="Re-run Marker PDF extraction even if cached markdown exists",
     )
     return parser.parse_args()
 

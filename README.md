@@ -1,6 +1,6 @@
 # OEM Manual Indexing and Retrieval
 
-Pipeline for extracting OEM service manuals with Azure Document Intelligence, hierarchical chunking, OpenAI embeddings, and Azure AI Search retrieval.
+Pipeline for extracting OEM service manuals with [Marker](https://github.com/datalab-to/marker) (local PDF-to-markdown), hierarchical chunking, OpenAI embeddings, and Azure AI Search retrieval.
 
 ## Setup
 
@@ -9,7 +9,9 @@ uv sync --extra dev
 cp .env.example .env
 ```
 
-Fill in Azure Document Intelligence, Azure AI Search, and OpenAI credentials in `.env`.
+Fill in Azure AI Search and OpenAI credentials in `.env`. Marker runs locally; the first extraction downloads model weights (can be slow on CPU).
+
+Optional Marker settings in `.env`: `MARKER_TORCH_DEVICE` (`cpu`, `cuda`, `mps`, or empty for auto), `MARKER_MODE` (`fast` on CPU), `MARKER_DISABLE_OCR` (default `true` — uses the PDF text layer and avoids `llama-server`; set `false` only for scanned manuals), `MARKER_HTML_TABLES` (default `true` — tables as HTML in the markdown file), `MARKER_FORCE_OCR`, `MARKER_PAGE_RANGE`.
 
 ## Index manuals
 
@@ -19,7 +21,7 @@ uv run python scripts/index_manuals.py --folder ./pdfs --manifest ./manifest.jso
 
 After extraction, markdown is saved under `extracted/markdown/` by default (one `.md` file per PDF, plus a `.page_map.json` sidecar). Configure with `MARKDOWN_OUTPUT_DIR` in `.env`; set it to empty to disable.
 
-If `{stem}.md` already exists, indexing **skips Azure Document Intelligence** and reuses the cached file (`SKIP_EXTRACTION_IF_MARKDOWN_EXISTS=true`). Use `--force-extract` or `FORCE_REEXTRACT=true` to re-run extraction.
+If `{stem}.md` already exists, indexing **skips Marker** and reuses the cached file (`SKIP_EXTRACTION_IF_MARKDOWN_EXISTS=true`). Use `--force-extract` or `FORCE_REEXTRACT=true` to re-run extraction.
 
 ## Search
 

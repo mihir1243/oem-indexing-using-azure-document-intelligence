@@ -9,9 +9,6 @@ if str(ROOT) not in sys.path:
 
 from rich.console import Console
 
-from azure.ai.documentintelligence import DocumentIntelligenceClient
-from azure.core.credentials import AzureKeyCredential
-
 from src.config import get_settings
 from src.embedding.embedder import Embedder
 from src.indexing.indexer import SearchIndexer
@@ -21,20 +18,22 @@ console = Console()
 
 def main() -> int:
     settings = get_settings()
-    console.print(f"Doc Intelligence endpoint: {settings.azure_doc_intelligence_endpoint}")
     console.print(f"Search endpoint: {settings.azure_search_endpoint}")
     console.print(f"Search index: {settings.azure_search_index_name}")
 
     try:
-        DocumentIntelligenceClient(
-            endpoint=settings.azure_doc_intelligence_endpoint,
-            credential=AzureKeyCredential(settings.azure_doc_intelligence_key),
-        )
+        import torch
+        from marker.converters.pdf import PdfConverter
+
+        device = settings.marker_torch_device.strip() or "auto"
+        console.print(f"Marker torch device setting: {device}")
         console.print(
-            "[green]Azure Document Intelligence[/green]: client initialized (key format OK)"
+            f"[green]Marker[/green]: import OK (torch {torch.__version__}, "
+            f"cuda available={torch.cuda.is_available()})"
         )
+        del PdfConverter
     except Exception as exc:
-        console.print(f"[red]Azure Document Intelligence[/red]: FAILED — {exc}")
+        console.print(f"[red]Marker[/red]: FAILED — {exc}")
         return 1
 
     try:

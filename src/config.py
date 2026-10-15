@@ -22,9 +22,6 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    azure_doc_intelligence_endpoint: str
-    azure_doc_intelligence_key: str
-
     azure_search_endpoint: str
     azure_search_key: str
     azure_search_index_name: str = "oem-manuals-index"
@@ -57,9 +54,19 @@ class Settings(BaseSettings):
     skip_extraction_if_markdown_exists: bool = True
     force_reextract: bool = False
 
+    # Marker PDF extraction (local). TORCH_DEVICE empty = Marker auto-selects.
+    marker_torch_device: str = ""
+    marker_force_ocr: bool = False
+    marker_page_range: str = ""
+    # balanced = VLM layout (GPU); fast = CPU-friendly layout with less OCR
+    marker_mode: str = "fast"
+    # Use PDF text layer only (no llama-server). Turn off for scanned pages.
+    marker_disable_ocr: bool = True
+    marker_normalize_headings: bool = True
+    # Embed tables as <table> HTML in markdown output (chunker treats HTML tables atomically).
+    marker_html_tables: bool = True
+
     @field_validator(
-        "azure_doc_intelligence_endpoint",
-        "azure_doc_intelligence_key",
         "azure_search_endpoint",
         "azure_search_key",
         "openai_api_key",
