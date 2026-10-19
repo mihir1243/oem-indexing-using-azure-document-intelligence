@@ -2,20 +2,23 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from azure.ai.documentintelligence import DocumentIntelligenceClient
-from azure.ai.documentintelligence.models import AnalyzeDocumentRequest, DocumentContentFormat
-from azure.core.credentials import AzureKeyCredential
+from liteparse import LiteParse
 
 from src.config import Settings, get_settings
+from src.extraction.liteparse_render import render_pages
 from src.models import ExtractedDocument, ManualMetadata, PageSpan
 
 
 class DocumentExtractor:
     def __init__(self, settings: Settings | None = None) -> None:
         self._settings = settings or get_settings()
-        self._client = DocumentIntelligenceClient(
-            endpoint=self._settings.azure_doc_intelligence_endpoint,
-            credential=AzureKeyCredential(self._settings.azure_doc_intelligence_key),
+        self._parser = LiteParse(
+            output_format="json",
+            extract_blocks=True,
+            ocr_enabled=self._settings.liteparse_ocr_enabled,
+            ocr_language=self._settings.liteparse_ocr_language,
+            dpi=float(self._settings.liteparse_dpi),
+            quiet=True,
         )
 
     def extract(
@@ -24,16 +27,8 @@ class DocumentExtractor:
         metadata: ManualMetadata,
     ) -> ExtractedDocument:
         pdf_path = pdf_path.resolve()
-        with pdf_path.open("rb") as document:
-            poller = self._client.begin_analyze_document(
-                "prebuilt-layout",
-                AnalyzeDocumentRequest(bytes_source=document.read()),
-                output_content_format=DocumentContentFormat.MARKDOWN,
-            )
-        result = poller.result()
-
-        markdown_content = result.content or ""
-        page_map = _build_page_map(result)
+        result = self._parser.parse(str(pdf_path))
+        markdown_content, page_map = render_pages(result.pages)
 
         return ExtractedDocument(
             source_file=pdf_path.name,
@@ -41,26 +36,6 @@ class DocumentExtractor:
             page_map=page_map,
             metadata=metadata,
         )
-
-
-def _build_page_map(result) -> list[PageSpan]:
-    spans: list[PageSpan] = []
-    if not result.pages:
-        return spans
-
-    for page in result.pages:
-        page_number = page.page_number or 1
-        if not page.spans:
-            continue
-        for span in page.spans:
-            if span.offset is None or span.length is None:
-                continue
-            start = int(span.offset)
-            end = start + int(span.length)
-            spans.append(PageSpan(start=start, end=end, page_number=page_number))
-
-    spans.sort(key=lambda s: s.start)
-    return spans
 
 
 def page_for_offset(page_map: list[PageSpan], offset: int) -> int:

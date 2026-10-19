@@ -19,7 +19,7 @@ def page_map_path_for(source_file: str, output_dir: Path) -> Path:
 
 
 def save_extracted_markdown(extracted: ExtractedDocument, output_dir: Path) -> Path:
-    """Write Azure Document Intelligence markdown output and page map to disk."""
+    """Write LiteParse markdown output and page map to disk."""
     output_dir = output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 

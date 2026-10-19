@@ -9,9 +9,6 @@ if str(ROOT) not in sys.path:
 
 from rich.console import Console
 
-from azure.ai.documentintelligence import DocumentIntelligenceClient
-from azure.core.credentials import AzureKeyCredential
-
 from src.config import get_settings
 from src.embedding.embedder import Embedder
 from src.indexing.indexer import SearchIndexer
@@ -21,20 +18,20 @@ console = Console()
 
 def main() -> int:
     settings = get_settings()
-    console.print(f"Doc Intelligence endpoint: {settings.azure_doc_intelligence_endpoint}")
     console.print(f"Search endpoint: {settings.azure_search_endpoint}")
     console.print(f"Search index: {settings.azure_search_index_name}")
+    console.print(
+        f"LiteParse OCR: enabled={settings.liteparse_ocr_enabled}, "
+        f"language={settings.liteparse_ocr_language}, dpi={settings.liteparse_dpi}"
+    )
 
     try:
-        DocumentIntelligenceClient(
-            endpoint=settings.azure_doc_intelligence_endpoint,
-            credential=AzureKeyCredential(settings.azure_doc_intelligence_key),
-        )
-        console.print(
-            "[green]Azure Document Intelligence[/green]: client initialized (key format OK)"
-        )
+        from liteparse import LiteParse  # noqa: PLC0415
+
+        LiteParse(quiet=True)
+        console.print("[green]LiteParse[/green]: import OK (local PDF parser)")
     except Exception as exc:
-        console.print(f"[red]Azure Document Intelligence[/red]: FAILED — {exc}")
+        console.print(f"[red]LiteParse[/red]: FAILED — {exc}")
         return 1
 
     try:

@@ -22,9 +22,6 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    azure_doc_intelligence_endpoint: str
-    azure_doc_intelligence_key: str
-
     azure_search_endpoint: str
     azure_search_key: str
     azure_search_index_name: str = "oem-manuals-index"
@@ -57,9 +54,11 @@ class Settings(BaseSettings):
     skip_extraction_if_markdown_exists: bool = True
     force_reextract: bool = False
 
+    liteparse_ocr_enabled: bool = True
+    liteparse_ocr_language: str = "eng"
+    liteparse_dpi: int = 150
+
     @field_validator(
-        "azure_doc_intelligence_endpoint",
-        "azure_doc_intelligence_key",
         "azure_search_endpoint",
         "azure_search_key",
         "openai_api_key",

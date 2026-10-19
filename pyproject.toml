@@ -5,7 +5,7 @@ description = "OEM manual extraction, chunking, embedding, and Azure AI Search r
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "azure-ai-documentintelligence>=1.0.0",
+    "liteparse>=0.1.0",
     "azure-search-documents>=11.6.0",
     "openai>=1.30.0",
     "pydantic-settings>=2.0.0",
