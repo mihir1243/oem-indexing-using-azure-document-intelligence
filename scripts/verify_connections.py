@@ -9,10 +9,11 @@ if str(ROOT) not in sys.path:
 
 from rich.console import Console
 
-from azure.ai.documentintelligence import DocumentIntelligenceClient
-from azure.core.credentials import AzureKeyCredential
+from docling.datamodel.base_models import InputFormat
+from docling.document_converter import DocumentConverter, PdfFormatOption
 
 from src.config import get_settings
+from src.extraction.extractor import build_pdf_pipeline_options
 from src.embedding.embedder import Embedder
 from src.indexing.indexer import SearchIndexer
 
@@ -21,20 +22,23 @@ console = Console()
 
 def main() -> int:
     settings = get_settings()
-    console.print(f"Doc Intelligence endpoint: {settings.azure_doc_intelligence_endpoint}")
     console.print(f"Search endpoint: {settings.azure_search_endpoint}")
     console.print(f"Search index: {settings.azure_search_index_name}")
+    console.print(
+        f"Docling: OCR={settings.docling_do_ocr}, table_mode={settings.docling_table_mode}, "
+        f"heading_hierarchy={settings.docling_heading_hierarchy}"
+    )
 
     try:
-        DocumentIntelligenceClient(
-            endpoint=settings.azure_doc_intelligence_endpoint,
-            credential=AzureKeyCredential(settings.azure_doc_intelligence_key),
+        pipeline_options = build_pdf_pipeline_options(settings)
+        DocumentConverter(
+            format_options={
+                InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options),
+            }
         )
-        console.print(
-            "[green]Azure Document Intelligence[/green]: client initialized (key format OK)"
-        )
+        console.print("[green]Docling[/green]: converter initialized")
     except Exception as exc:
-        console.print(f"[red]Azure Document Intelligence[/red]: FAILED — {exc}")
+        console.print(f"[red]Docling[/red]: FAILED — {exc}")
         return 1
 
     try:

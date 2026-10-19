@@ -1,6 +1,6 @@
 # OEM Manual Indexing and Retrieval
 
-Pipeline for extracting OEM service manuals with Azure Document Intelligence, hierarchical chunking, OpenAI embeddings, and Azure AI Search retrieval.
+Pipeline for extracting OEM service manuals with Docling (HTML tables in markdown), hierarchical chunking, OpenAI embeddings, and Azure AI Search retrieval.
 
 ## Setup
 
@@ -9,7 +9,7 @@ uv sync --extra dev
 cp .env.example .env
 ```
 
-Fill in Azure Document Intelligence, Azure AI Search, and OpenAI credentials in `.env`.
+Fill in Azure AI Search and OpenAI credentials in `.env`. Docling runs locally; the first extraction may download models. By default, `DOCLING_HEADING_HIERARCHY=true` infers `#` / `##` / `###` from PDF bookmarks, outline numbering, and font style (not flat `##` for every heading).
 
 ## Index manuals
 
@@ -19,7 +19,7 @@ uv run python scripts/index_manuals.py --folder ./pdfs --manifest ./manifest.jso
 
 After extraction, markdown is saved under `extracted/markdown/` by default (one `.md` file per PDF, plus a `.page_map.json` sidecar). Configure with `MARKDOWN_OUTPUT_DIR` in `.env`; set it to empty to disable.
 
-If `{stem}.md` already exists, indexing **skips Azure Document Intelligence** and reuses the cached file (`SKIP_EXTRACTION_IF_MARKDOWN_EXISTS=true`). Use `--force-extract` or `FORCE_REEXTRACT=true` to re-run extraction.
+If `{stem}.md` already exists, indexing **skips Docling** and reuses the cached file (`SKIP_EXTRACTION_IF_MARKDOWN_EXISTS=true`). Use `--force-extract` or `FORCE_REEXTRACT=true` to re-run extraction.
 
 ## Search
 

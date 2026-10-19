@@ -2,21 +2,24 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from azure.ai.documentintelligence import DocumentIntelligenceClient
-from azure.ai.documentintelligence.models import AnalyzeDocumentRequest, DocumentContentFormat
-from azure.core.credentials import AzureKeyCredential
+from docling.datamodel.base_models import InputFormat
+from docling.datamodel.pipeline_options import (
+    HeadingHierarchyOptions,
+    PdfPipelineOptions,
+    TableFormerMode,
+    TableStructureOptions,
+)
+from docling.document_converter import DocumentConverter, PdfFormatOption
 
 from src.config import Settings, get_settings
+from src.extraction.docling_export import build_markdown_and_page_map
 from src.models import ExtractedDocument, ManualMetadata, PageSpan
 
 
 class DocumentExtractor:
     def __init__(self, settings: Settings | None = None) -> None:
         self._settings = settings or get_settings()
-        self._client = DocumentIntelligenceClient(
-            endpoint=self._settings.azure_doc_intelligence_endpoint,
-            credential=AzureKeyCredential(self._settings.azure_doc_intelligence_key),
-        )
+        self._converter = _build_converter(self._settings)
 
     def extract(
         self,
@@ -24,16 +27,10 @@ class DocumentExtractor:
         metadata: ManualMetadata,
     ) -> ExtractedDocument:
         pdf_path = pdf_path.resolve()
-        with pdf_path.open("rb") as document:
-            poller = self._client.begin_analyze_document(
-                "prebuilt-layout",
-                AnalyzeDocumentRequest(bytes_source=document.read()),
-                output_content_format=DocumentContentFormat.MARKDOWN,
-            )
-        result = poller.result()
+        result = self._converter.convert(str(pdf_path))
+        doc = result.document
 
-        markdown_content = result.content or ""
-        page_map = _build_page_map(result)
+        markdown_content, page_map = build_markdown_and_page_map(doc)
 
         return ExtractedDocument(
             source_file=pdf_path.name,
@@ -43,24 +40,29 @@ class DocumentExtractor:
         )
 
 
-def _build_page_map(result) -> list[PageSpan]:
-    spans: list[PageSpan] = []
-    if not result.pages:
-        return spans
+def build_pdf_pipeline_options(settings: Settings) -> PdfPipelineOptions:
+    table_mode = (
+        TableFormerMode.FAST
+        if settings.docling_table_mode.lower() == "fast"
+        else TableFormerMode.ACCURATE
+    )
+    infer_headings = settings.docling_heading_hierarchy
+    return PdfPipelineOptions(
+        do_table_structure=True,
+        do_ocr=settings.docling_do_ocr,
+        generate_parsed_pages=infer_headings,
+        heading_hierarchy_options=HeadingHierarchyOptions(enabled=infer_headings),
+        table_structure_options=TableStructureOptions(mode=table_mode),
+    )
 
-    for page in result.pages:
-        page_number = page.page_number or 1
-        if not page.spans:
-            continue
-        for span in page.spans:
-            if span.offset is None or span.length is None:
-                continue
-            start = int(span.offset)
-            end = start + int(span.length)
-            spans.append(PageSpan(start=start, end=end, page_number=page_number))
 
-    spans.sort(key=lambda s: s.start)
-    return spans
+def _build_converter(settings: Settings) -> DocumentConverter:
+    pipeline_options = build_pdf_pipeline_options(settings)
+    return DocumentConverter(
+        format_options={
+            InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options),
+        }
+    )
 
 
 def page_for_offset(page_map: list[PageSpan], offset: int) -> int:

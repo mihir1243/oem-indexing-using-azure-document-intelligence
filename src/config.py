@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -22,9 +23,6 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    azure_doc_intelligence_endpoint: str
-    azure_doc_intelligence_key: str
-
     azure_search_endpoint: str
     azure_search_key: str
     azure_search_index_name: str = "oem-manuals-index"
@@ -37,6 +35,11 @@ class Settings(BaseSettings):
     chunk_max_tokens: int = 1000
     chunk_overlap_tokens: int = 128
     embedding_batch_size: int = 100
+
+    docling_do_ocr: bool = True
+    docling_table_mode: Literal["accurate", "fast"] = "accurate"
+    # Infer section-header depth (bookmarks, numbering, font style) instead of flat ## headings.
+    docling_heading_hierarchy: bool = True
 
     # Set USE_SEMANTIC_SEARCH=true only if the index defines semantic configurations.
     use_semantic_search: bool = False
@@ -58,8 +61,6 @@ class Settings(BaseSettings):
     force_reextract: bool = False
 
     @field_validator(
-        "azure_doc_intelligence_endpoint",
-        "azure_doc_intelligence_key",
         "azure_search_endpoint",
         "azure_search_key",
         "openai_api_key",

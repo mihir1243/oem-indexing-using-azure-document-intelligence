@@ -12,8 +12,6 @@ def test_build_tag_scoring_parameters_single_entry():
 
 def test_resolve_scoring_parameters_only_when_enabled():
     base = {
-        "azure_doc_intelligence_endpoint": "https://example.cognitiveservices.azure.com/",
-        "azure_doc_intelligence_key": "k",
         "azure_search_endpoint": "https://example.search.windows.net",
         "azure_search_key": "k",
         "openai_api_key": "k",

@@ -63,7 +63,7 @@ async def index_manual(
     )
     logger.info(
         "Extraction source: %s",
-        "cached markdown" if from_cache else "azure_document_intelligence",
+        "cached markdown" if from_cache else "docling",
     )
 
     chunks = await _run_step("chunking", chunker.chunk, extracted)

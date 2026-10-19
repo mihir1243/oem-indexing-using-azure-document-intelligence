@@ -1,11 +1,11 @@
 [project]
 name = "oem-manual-indexing-using-azure-intelligence"
 version = "0.1.0"
-description = "OEM manual extraction, chunking, embedding, and Azure AI Search retrieval pipeline"
+description = "OEM manual extraction (Docling), chunking, embedding, and Azure AI Search retrieval pipeline"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "azure-ai-documentintelligence>=1.0.0",
+    "docling>=2.0.0",
     "azure-search-documents>=11.6.0",
     "openai>=1.30.0",
     "pydantic-settings>=2.0.0",
