@@ -81,6 +81,7 @@ def _plain_markdown(doc: fitz.Document, settings: Settings):
         "header": include_margin_text,
         "footer": include_margin_text,
         "show_progress": False,
+        "use_ocr": settings.pymupdf_use_ocr,
     }
     if settings.pymupdf_table_output == "html":
         markdown_kwargs["table_output"] = "html"
@@ -97,7 +98,7 @@ def _layout_markdown_with_headings(
         doc,
         filename=source_file,
         force_text=True,
-        use_ocr=True,
+        use_ocr=settings.pymupdf_use_ocr,
         show_progress=False,
         render_html_tables=True if settings.pymupdf_table_output == "html" else None,
     )

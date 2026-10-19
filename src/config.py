@@ -71,6 +71,8 @@ class Settings(BaseSettings):
     pymupdf_use_bookmarks: bool = False
     # Outlines with fewer usable entries are ignored (e.g. a single placeholder bookmark)
     pymupdf_bookmarks_min_entries: int = 3
+    # Layout OCR needs RapidOCR/Tesseract; keep off for text PDFs (scanned → Azure DI in auto mode)
+    pymupdf_use_ocr: bool = False
 
     @field_validator("extraction_backend", mode="before")
     @classmethod
