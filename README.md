@@ -2,6 +2,36 @@
 
 Pipeline for extracting OEM service manuals with Docling (HTML tables in markdown), hierarchical chunking, OpenAI embeddings, and Azure AI Search retrieval.
 
+## Docker (run anywhere)
+
+Build once, then run on any host with Docker (Azure Container Apps, App Service for Containers, ACI, local, etc.).
+
+```bash
+docker build -t oem-manual-indexing:latest .
+docker run --rm --env-file .env \
+  -v "%CD%\pdfs:/data/pdfs" \
+  -v "%CD%\extracted:/data/extracted" \
+  -v "%CD%\manifest.json:/data/manifest.json" \
+  -v oem-docling-cache:/data/.cache \
+  oem-manual-indexing:latest \
+  index --folder /data/pdfs --manifest /data/manifest.json
+```
+
+On Linux/macOS, replace the volume paths with `$(pwd)/pdfs`, etc.
+
+| Mount | Purpose |
+|-------|---------|
+| `/data/pdfs` | Input PDFs (read-only is enough) |
+| `/data/extracted` | Markdown cache (`MARKDOWN_OUTPUT_DIR` defaults to `/data/extracted/markdown`) |
+| `/data/.cache` | Docling / Hugging Face model cache (use a named volume so models are not re-downloaded every run) |
+| `/data/manifest.json` | Optional manifest file for batch indexing |
+
+Other commands: `search`, `verify`, `help`. With Compose: `docker compose run --rm oem-manuals index --folder /data/pdfs --manifest /data/manifest.json` (set `command` in `docker-compose.yml` or pass it after the service name).
+
+First extraction in a fresh cache volume can take a long time while models download.
+
+**CPU / memory:** set `cpus`, `mem_limit`, and `mem_reservation` on the service in `docker-compose.yml` (defaults: 4 CPUs, 8 GB cap, 4 GB reserved). For plain `docker run`, use `--cpus 4 --memory 8g`.
+
 ## Setup
 
 ```bash

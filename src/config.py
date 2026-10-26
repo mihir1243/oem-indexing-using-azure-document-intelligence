@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     # Infer section-header depth (bookmarks, numbering, font style) instead of flat ## headings.
     docling_heading_hierarchy: bool = True
 
+    # IBM Docling SaaS (scripts/docling_saas.py)
+    docling_saas_url: str = ""
+    docling_saas_api_key: str = ""
+
     # Set USE_SEMANTIC_SEARCH=true only if the index defines semantic configurations.
     use_semantic_search: bool = False
     semantic_configuration_name: str = "oem-semantic-config"
@@ -64,6 +68,7 @@ class Settings(BaseSettings):
         "azure_search_endpoint",
         "azure_search_key",
         "openai_api_key",
+        "docling_saas_api_key",
         mode="before",
     )
     @classmethod

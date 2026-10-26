@@ -1,0 +1,25 @@
+# Git and local env
+.git
+.gitignore
+.env
+.env.*
+
+# Python
+.venv
+__pycache__
+**/__pycache__
+*.py[cod]
+*.egg-info
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Large / generated (mount at runtime instead)
+extracted/
+manuals/
+pdfs/
+
+# IDE and docs artifacts
+.cursor
+docs/
+tests/
