@@ -1,9 +1,6 @@
 # Git and local env
 .git
 .gitignore
-.env
-.env.*
-
 # Python
 .venv
 __pycache__

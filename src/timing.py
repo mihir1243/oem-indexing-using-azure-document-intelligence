@@ -17,6 +17,9 @@ _OEM_LOGGERS = (
     "oem_manuals.pipeline",
     "oem_manuals.search",
     "oem_manuals.timing",
+    "oem_manuals.api",
+    "oem_manuals.api.jobs",
+    "oem_manuals.extraction",
 )
 _QUIET_LOGGERS = (
     "azure",
@@ -43,6 +46,17 @@ def configure_logging(level: int = logging.INFO) -> None:
         logging.getLogger(name).setLevel(logging.WARNING)
 
     logging.getLogger().setLevel(logging.WARNING)
+
+
+def resolve_log_level(name: str) -> int:
+    level = getattr(logging, name.strip().upper(), None)
+    if isinstance(level, int):
+        return level
+    return logging.INFO
+
+
+def configure_api_logging(level_name: str = "INFO") -> None:
+    configure_logging(resolve_log_level(level_name))
 
 
 @contextmanager

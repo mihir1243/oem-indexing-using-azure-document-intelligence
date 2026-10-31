@@ -1,25 +1,31 @@
-services:
-  oem-manuals:
-    build: .
-    image: oem-manual-indexing:latest
-    # Container resource limits (edit for your host / manual size)
-    cpus: "4.0"
-    mem_limit: 8g
-    mem_reservation: 4g
-    env_file:
-      - .env
-    environment:
-      MARKDOWN_OUTPUT_DIR: /data/extracted/markdown
-      HF_HOME: /data/.cache/huggingface
-      XDG_CACHE_HOME: /data/.cache
-    volumes:
-      - ./pdfs:/data/pdfs:ro
-      - ./extracted:/data/extracted
-      - ./manifest.json:/data/manifest.json:ro
-      - docling-cache:/data/.cache
-    # Override command for your job, e.g.:
-    # command: ["index", "--folder", "/data/pdfs", "--manifest", "/data/manifest.json"]
-    command: ["help"]
-
-volumes:
-  docling-cache:
+# Rebuild after code changes: docker compose up --build
+services:
+  oem-manuals:
+    build: .
+    image: oem-manual-indexing:latest
+    # Container resource limits (edit for your host / manual size)
+    cpus: "4.0"
+    mem_limit: 8g
+    mem_reservation: 4g
+    env_file:
+      - .env
+    environment:
+      MARKDOWN_OUTPUT_DIR: /data/extracted/markdown
+      API_JOBS_DIR: /data/jobs
+      HF_HOME: /data/.cache/huggingface
+      XDG_CACHE_HOME: /data/.cache
+      DOCLING_OCR_ENGINE: tesseract
+      DOCLING_TESSERACT_LANGS: eng
+    ports:
+      - "8009:8000"
+    volumes:
+      - ./manuals:/data/pdfs:ro
+      - ./extracted:/data/extracted
+      - ./manifest.json:/data/manifest.json:ro
+      - extraction-jobs:/data/jobs
+      - docling-cache:/data/.cache
+    command: ["python", "-m", "src.api"]
+
+volumes:
+  docling-cache:
+  extraction-jobs:

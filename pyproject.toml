@@ -5,7 +5,12 @@ description = "OEM manual extraction (Docling), chunking, embedding, and Azure A
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "docling>=2.0.0",
+    # PDF pipeline only (no docx/pptx/xlsx/email/etc. from docling-slim[standard]).
+    # OCR via system Tesseract (see DOCLING_OCR_ENGINE). Avoid feat-ocr-rapidocr in cloud (modelscope.cn).
+    "docling-slim[format-pdf,convert-core,models-local]>=2.0.0",
+    # Direct pins so uv resolves CPU wheels from pytorch-cpu (see tool.uv.sources).
+    "torch>=2.2.2",
+    "torchvision>=0.15.0",
     "azure-search-documents>=11.6.0",
     "openai>=1.30.0",
     "pydantic-settings>=2.0.0",
@@ -14,6 +19,11 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "tenacity>=8.0.0",
     "rich>=13.0.0",
+    "fastapi>=0.115.0",
+    "uvicorn>=0.32.0",
+    "python-multipart>=0.0.12",
+    # Docling table structure (docling_ibm_models) imports cv2; not pulled without rapidocr.
+    "opencv-python-headless>=4.8.0",
 ]
 
 [project.optional-dependencies]
@@ -35,3 +45,13 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
+
+# CPU-only PyTorch in Docker/Linux (default PyPI torch pulls multi-GB NVIDIA CUDA wheels).
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true

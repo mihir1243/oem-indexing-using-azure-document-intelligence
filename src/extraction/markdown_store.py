@@ -28,7 +28,7 @@ def save_extracted_markdown(extracted: ExtractedDocument, output_dir: Path) -> P
 
     map_path = page_map_path_for(extracted.source_file, output_dir)
     map_path.write_text(
-        json.dumps(_serialize_page_map(extracted.page_map), indent=2),
+        json.dumps(serialize_page_map(extracted.page_map), indent=2),
         encoding="utf-8",
     )
     return md_path
@@ -55,7 +55,7 @@ def load_cached_extraction(
     )
 
 
-def _serialize_page_map(page_map: list[PageSpan]) -> list[dict[str, int]]:
+def serialize_page_map(page_map: list[PageSpan]) -> list[dict[str, int]]:
     return [
         {"start": span.start, "end": span.end, "page_number": span.page_number}
         for span in page_map

@@ -16,13 +16,42 @@ def _max_dimensions_for_model(model_name: str) -> int:
     return 1536
 
 
-class Settings(BaseSettings):
+class DoclingSettings(BaseSettings):
+    """Docling extraction options (shared by CLI pipeline and HTTP API)."""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
     )
 
+    docling_do_ocr: bool = True
+    # tesseract = CLI in Docker/Azure; rapidocr needs optional deps + outbound model downloads
+    docling_ocr_engine: Literal["tesseract", "rapidocr"] = "tesseract"
+    # Comma-separated Tesseract traineddata stems (Docker image includes eng)
+    docling_tesseract_langs: str = "eng"
+    docling_table_mode: Literal["accurate", "fast"] = "accurate"
+    # Infer section-header depth (bookmarks, numbering, font style) instead of flat ## headings.
+    docling_heading_hierarchy: bool = True
+
+    # IBM Docling SaaS (scripts/docling_saas.py)
+    docling_saas_url: str = ""
+    docling_saas_api_key: str = ""
+
+
+class ApiSettings(DoclingSettings):
+    api_host: str = "0.0.0.0"
+    api_port: int = 8000
+    api_jobs_dir: str = "/data/jobs"
+    # Optional shared secret; clients send header X-API-Key when set.
+    api_key: str = ""
+    api_max_upload_bytes: int = 200 * 1024 * 1024
+    api_max_concurrent_extractions: int = 1
+    # DEBUG, INFO, WARNING, ERROR — controls OEM API and extraction loggers
+    api_log_level: str = "INFO"
+
+
+class Settings(DoclingSettings):
     azure_search_endpoint: str
     azure_search_key: str
     azure_search_index_name: str = "oem-manuals-index"
@@ -35,15 +64,6 @@ class Settings(BaseSettings):
     chunk_max_tokens: int = 1000
     chunk_overlap_tokens: int = 128
     embedding_batch_size: int = 100
-
-    docling_do_ocr: bool = True
-    docling_table_mode: Literal["accurate", "fast"] = "accurate"
-    # Infer section-header depth (bookmarks, numbering, font style) instead of flat ## headings.
-    docling_heading_hierarchy: bool = True
-
-    # IBM Docling SaaS (scripts/docling_saas.py)
-    docling_saas_url: str = ""
-    docling_saas_api_key: str = ""
 
     # Set USE_SEMANTIC_SEARCH=true only if the index defines semantic configurations.
     use_semantic_search: bool = False
@@ -93,3 +113,8 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+@lru_cache
+def get_api_settings() -> ApiSettings:
+    return ApiSettings()

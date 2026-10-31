@@ -3,6 +3,13 @@ set -e
 
 cd /app
 
+# Docker Desktop on Windows can pass CRLF in argv; normalize the subcommand.
+if [ $# -ge 1 ]; then
+  arg1=$(printf '%s' "$1" | tr -d '\r')
+  shift
+  set -- "$arg1" "$@"
+fi
+
 print_help() {
   cat <<'EOF'
 OEM manual indexing container
@@ -15,6 +22,7 @@ Usage:
     IMAGE <command> [args]
 
 Commands:
+  api      Start HTTP API (upload / poll / download markdown) on port 8000
   index    Run scripts/index_manuals.py (default pipeline: extract → chunk → embed → search)
   search   Run scripts/search_manuals.py
   verify   Test Azure AI Search and OpenAI credentials
@@ -33,6 +41,10 @@ EOF
 }
 
 case "${1:-help}" in
+  api)
+    shift
+    exec python -m src.api "$@"
+    ;;
   index)
     shift
     exec python scripts/index_manuals.py "$@"
